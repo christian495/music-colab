@@ -7,7 +7,7 @@ REPO = "/kaggle/temp/ACE-Step-1.5"
 LOG = "/kaggle/temp/install.log"
 SRVLOG = "/kaggle/temp/server.log"
 TUNLOG = "/kaggle/temp/tunnel.log"
-STATE = {"stage": "start", "pct": 0, "msg": "", "url": "", "key": "", "verified": False}
+STATE = {"stage": "start", "pct": 0, "msg": "", "url": "", "key": "", "verified": False, "v": 2}
 os.makedirs("/kaggle/temp", exist_ok=True)
 os.environ["PATH"] = "/root/.local/bin:/usr/local/bin:" + os.environ.get("PATH", "")
 
@@ -98,6 +98,17 @@ notify("install", 15, "Ini-install ang mga package, 5 hanggang 10 minuto")
 if sh("uv sync", LOG, cwd=REPO, env=dict(os.environ, MPLBACKEND="Agg")) != 0:
     fail("Pumalpak ang uv sync.", LOG)
 
+# T4 (pre-Ampere) runs the DiT in float16, which gives NaN latents as soon as lyrics are used (instrumental worked).
+# ACESTEP_DTYPE is only mentioned in the error text and is not implemented, so patch the dtype in the source.
+_f = REPO + "/acestep/core/generation/handler/init_service_orchestrator.py"
+_s = open(_f).read()
+_old = "                else:\n                    self.dtype = torch.float16\n"
+if _old in _s:
+    open(_f, "w").write(_s.replace(_old, "                else:\n                    self.dtype = torch.float32\n", 1))
+    print("PATCHED: DiT dtype float32 on pre-Ampere GPUs", flush=True)
+else:
+    print("PATCH NOT FOUND: dtype line changed upstream", flush=True)
+
 notify("model", 40, "Sinisimulan ang server at dina-download ang model")
 env = dict(
     os.environ,
@@ -157,10 +168,10 @@ def api_call(path, body=None, timeout=30):
 notify("model", 86, "Sinusubukan ang model sa maikling kanta. Ito ang unang pag-load, matagal ito")
 task_id = None
 try:
-    r = api_call("/release_task", {"prompt": "soft calm piano", "lyrics": "[Instrumental]",
+    r = api_call("/release_task", {"prompt": "soft acoustic pop, gentle voice", "lyrics": "[Verse]\\nla la la la la\\nna na na na na\\n[Chorus]\\nla la la la la",
                                    "audio_format": "mp3", "batch_size": 1, "thinking": False,
                                    "use_cot_caption": False, "use_cot_language": False,
-                                   "audio_duration": 10})
+                                   "audio_duration": 15})
     task_id = r.get("task_id") if isinstance(r, dict) else None
 except Exception as e:
     fail("Hindi tinanggap ng server ang test na kanta: %s" % e, SRVLOG)
