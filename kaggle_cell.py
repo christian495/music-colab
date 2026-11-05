@@ -231,8 +231,22 @@ print("LINK:", url)
 print("KEY:", API_KEY)
 
 last = time.time()
+last_use = time.time()
+last_jobs = -1
+IDLE_LIMIT = 5 * 3600   # nobody made a song for 5 hours: stop, so the weekly GPU quota is not burned for nothing
 while True:
     time.sleep(20)
+    try:
+        _st = api_call("/v1/stats")
+        _total = int(((_st or {}).get("jobs") or {}).get("total", -1))
+        if _total != last_jobs:
+            last_jobs = _total
+            last_use = time.time()
+    except Exception:
+        pass
+    if time.time() - last_use > IDLE_LIMIT:
+        notify("stopped", 0, "Natulog ang server dahil walang gumamit ng 5 oras. Pasimulan ulit.")
+        break
     if srv.poll() is not None:
         notify("error", 0, "Namatay ang server. " + tail(SRVLOG))
         break
