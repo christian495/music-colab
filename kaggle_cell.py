@@ -168,7 +168,7 @@ def api_call(path, body=None, timeout=30):
 notify("model", 86, "Sinusubukan ang model sa maikling kanta. Ito ang unang pag-load, matagal ito")
 task_id = None
 try:
-    r = api_call("/release_task", {"prompt": "soft acoustic pop, gentle voice", "lyrics": "[Verse]\\nla la la la la\\nna na na na na\\n[Chorus]\\nla la la la la",
+    r = api_call("/release_task", {"prompt": "soft acoustic pop, gentle voice", "lyrics": "[Verse]\nla la la la la\nna na na na na\n[Chorus]\nla la la la la",
                                    "audio_format": "mp3", "batch_size": 1, "thinking": False,
                                    "use_cot_caption": False, "use_cot_language": False,
                                    "audio_duration": 15})
