@@ -132,10 +132,17 @@ if sh("nvidia-smi -L", LOG) != 0:
 _gpu = subprocess.run("nvidia-smi --query-gpu=name --format=csv,noheader", shell=True, capture_output=True, text=True).stdout
 if "P100" in _gpu:
     fail("P100 ang GPU at hindi ito tugma. Piliin ang Accelerator: GPU T4 x2.")
-try:
-    urllib.request.urlopen("https://github.com", timeout=15).read(10)
-except Exception as _e:
-    fail("Walang internet. Sa Settings ng notebook, i-on ang Internet. (%s)" % _e)
+_net_err = None
+for _try in range(8):  # one slow answer from GitHub must not stop the whole start: try again for about two minutes
+    try:
+        urllib.request.urlopen("https://github.com", timeout=30).read(10)
+        _net_err = None
+        break
+    except Exception as _e:
+        _net_err = _e
+        time.sleep(15)
+if _net_err is not None:
+    fail("Walang internet. Sa Settings ng notebook, i-on ang Internet. (%s)" % _net_err)
 
 notify("install", 5, "Ini-install ang uv")
 if sh("curl -LsSf https://astral.sh/uv/install.sh | sh", LOG) != 0:
