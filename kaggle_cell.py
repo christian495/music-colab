@@ -175,6 +175,7 @@ env = dict(
     os.environ,
     MPLBACKEND="Agg",
     CUDA_VISIBLE_DEVICES="0",
+    PYTORCH_CUDA_ALLOC_CONF="expandable_segments:True",
     ACESTEP_API_KEY=API_KEY,
     ACESTEP_API_HOST="0.0.0.0",
     ACESTEP_API_PORT=str(PORT),
@@ -330,6 +331,7 @@ def hq_try(model, dtype):
     """Start a server with this model on GPU 1 and make a 15 second test song. Returns the seconds the test song took."""
     global hq_srv
     env2 = dict(os.environ, MPLBACKEND="Agg", CUDA_VISIBLE_DEVICES="1", ACESTEP_API_KEY=API_KEY,
+                PYTORCH_CUDA_ALLOC_CONF="expandable_segments:True",
                 ACESTEP_API_HOST="0.0.0.0", ACESTEP_API_PORT=str(HQ_PORT), ACESTEP_LM_BACKEND="pt",
                 ACESTEP_INIT_LLM="false", ACESTEP_CONFIG_PATH=model, ACESTEP_T4_DTYPE=dtype)
     try:
