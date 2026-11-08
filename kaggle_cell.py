@@ -272,7 +272,11 @@ if not done:
 notify("model", 99, "Tagumpay ang test na kanta")
 
 notify("tunnel", 99, "Ginagawa ang online na link")
-if sh("curl -L -o /usr/local/bin/cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 && chmod +x /usr/local/bin/cloudflared", LOG) != 0:
+# GitHub can answer very slowly: every try has a time limit, and we try up to 8 times instead of hanging for ever
+_dl = ("for i in 1 2 3 4 5 6 7 8; do curl -fL --connect-timeout 20 --max-time 120 -o /usr/local/bin/cloudflared "
+       "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 && test -s /usr/local/bin/cloudflared && break; "
+       "rm -f /usr/local/bin/cloudflared; sleep 10; done; test -s /usr/local/bin/cloudflared && chmod +x /usr/local/bin/cloudflared")
+if sh(_dl, LOG) != 0:
     fail("Hindi na-download ang cloudflared.", LOG)
 tun = subprocess.Popen(
     ["cloudflared", "tunnel", "--url", "http://127.0.0.1:%d" % PORT, "--no-autoupdate"],
